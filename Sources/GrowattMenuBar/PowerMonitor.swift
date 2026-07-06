@@ -26,7 +26,7 @@ final class PowerMonitor: ObservableObject {
 
     var menuTitle: String {
         if let latest {
-            return PowerFormatting.kilowatts(latest.acWatts, digits: 2)
+            return "AC \(PowerFormatting.kilowatts(latest.acWatts, digits: 2))"
         }
         if lastError != nil {
             return "Solar"

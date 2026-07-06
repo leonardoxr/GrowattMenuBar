@@ -79,21 +79,21 @@ private struct GaugeRow: View {
     var body: some View {
         HStack(spacing: 12) {
             MetricGauge(
-                title: "PV",
-                value: sample.pvWatts / 1000,
-                unit: "kW",
-                detail: PowerFormatting.watts(sample.pvWatts),
-                fraction: sample.pvWatts / max(capacityWatts, 1),
-                color: .yellow,
-                digits: 2
-            )
-            MetricGauge(
                 title: "AC",
                 value: sample.acWatts / 1000,
                 unit: "kW",
                 detail: PowerFormatting.watts(sample.acWatts),
                 fraction: sample.acWatts / max(capacityWatts, 1),
                 color: .blue,
+                digits: 2
+            )
+            MetricGauge(
+                title: "PV",
+                value: sample.pvWatts / 1000,
+                unit: "kW",
+                detail: PowerFormatting.watts(sample.pvWatts),
+                fraction: sample.pvWatts / max(capacityWatts, 1),
+                color: .yellow,
                 digits: 2
             )
             MetricGauge(
@@ -158,7 +158,7 @@ private struct HistoryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Power History")
+                Text("AC Power History")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Text("\(samples.count) samples")
