@@ -57,7 +57,7 @@ Host:     192.168.31.5
 Port:     502
 Unit:     1
 Poll:     10 seconds
-Capacity: 6000 W
+Capacity: 6.0 kW
 ```
 
 If the host changes, prefer setting a DHCP reservation on your router for the datalogger MAC address instead of relying on random DHCP leases.

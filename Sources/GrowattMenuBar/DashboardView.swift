@@ -40,7 +40,7 @@ private struct HeaderView: View {
 
             if let latest = monitor.latest {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(latest.acWatts, format: .number.precision(.fractionLength(0))) W")
+                    Text(PowerFormatting.kilowatts(latest.acWatts))
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                     Text("AC output")
                         .font(.caption)
@@ -79,24 +79,27 @@ private struct GaugeRow: View {
         HStack(spacing: 12) {
             MetricGauge(
                 title: "PV",
-                value: sample.pvWatts,
-                unit: "W",
+                value: sample.pvWatts / 1000,
+                unit: "kW",
                 fraction: sample.pvWatts / max(capacityWatts, 1),
-                color: .yellow
+                color: .yellow,
+                digits: 1
             )
             MetricGauge(
                 title: "AC",
-                value: sample.acWatts,
-                unit: "W",
+                value: sample.acWatts / 1000,
+                unit: "kW",
                 fraction: sample.acWatts / max(capacityWatts, 1),
-                color: .blue
+                color: .blue,
+                digits: 1
             )
             MetricGauge(
                 title: "Temp",
                 value: sample.inverterTempC,
                 unit: "C",
                 fraction: min(sample.inverterTempC / 80, 1),
-                color: .orange
+                color: .orange,
+                digits: 1
             )
         }
     }
@@ -108,6 +111,7 @@ private struct MetricGauge: View {
     let unit: String
     let fraction: Double
     let color: Color
+    let digits: Int
 
     var body: some View {
         VStack(spacing: 7) {
@@ -121,7 +125,7 @@ private struct MetricGauge: View {
                     .stroke(color, style: StrokeStyle(lineWidth: 9, lineCap: .round))
                     .rotationEffect(.degrees(90))
                 VStack(spacing: 0) {
-                    Text(value, format: .number.precision(.fractionLength(0)))
+                    Text(value, format: .number.precision(.fractionLength(digits)))
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                     Text(unit)
                         .font(.caption2)
@@ -206,8 +210,8 @@ private struct DetailGrid: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                DetailTile(title: "PV1", primary: watts(sample.pv1Watts), secondary: "\(one(sample.pv1Volts)) V · \(one(sample.pv1Amps)) A", color: .yellow)
-                DetailTile(title: "PV2", primary: watts(sample.pv2Watts), secondary: "\(one(sample.pv2Volts)) V · \(one(sample.pv2Amps)) A", color: .orange)
+                DetailTile(title: "PV1", primary: power(sample.pv1Watts), secondary: "\(one(sample.pv1Volts)) V · \(one(sample.pv1Amps)) A", color: .yellow)
+                DetailTile(title: "PV2", primary: power(sample.pv2Watts), secondary: "\(one(sample.pv2Volts)) V · \(one(sample.pv2Amps)) A", color: .orange)
             }
 
             HStack(spacing: 10) {
@@ -222,8 +226,8 @@ private struct DetailGrid: View {
         }
     }
 
-    private func watts(_ value: Double) -> String {
-        "\(value.formatted(.number.precision(.fractionLength(0)))) W"
+    private func power(_ value: Double) -> String {
+        PowerFormatting.kilowatts(value)
     }
 
     private func one(_ value: Double) -> String {
@@ -300,7 +304,7 @@ private struct SettingsView: View {
                     Text("Capacity")
                         .foregroundStyle(.secondary)
                     Stepper(value: $monitor.capacityWatts, in: 1000...30000, step: 500) {
-                        Text("\(Int(monitor.capacityWatts)) W")
+                        Text(PowerFormatting.kilowatts(monitor.capacityWatts))
                     }
                 }
             }

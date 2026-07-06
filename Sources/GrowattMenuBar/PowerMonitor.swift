@@ -26,7 +26,7 @@ final class PowerMonitor: ObservableObject {
 
     var menuTitle: String {
         if let latest {
-            return "\(Self.wattsFormatter.string(from: NSNumber(value: latest.acWatts)) ?? "0")W"
+            return PowerFormatting.kilowatts(latest.acWatts)
         }
         if lastError != nil {
             return "Solar"
@@ -96,12 +96,6 @@ final class PowerMonitor: ObservableObject {
         }
     }
 
-    static let wattsFormatter: NumberFormatter = {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        return formatter
-    }()
 }
 
 extension PowerSample {
