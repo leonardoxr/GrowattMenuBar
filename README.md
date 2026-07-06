@@ -18,6 +18,18 @@ The app is local-first and read-only:
 - AC power history chart
 - Configurable host, port, Modbus unit id, polling interval, and inverter capacity
 
+## Screenshots
+
+Screenshots use sample data.
+
+<p align="center">
+  <img src="Docs/Screenshots/menu-bar.svg" alt="GrowattMenuBar menu bar showing AC output" width="760">
+</p>
+
+<p align="center">
+  <img src="Docs/Screenshots/popover.svg" alt="GrowattMenuBar expanded popover with AC, PV, history, and generation details" width="430">
+</p>
+
 ## PV vs AC
 
 - `PV` is the DC power coming from the panels into the inverter.
