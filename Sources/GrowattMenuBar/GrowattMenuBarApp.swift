@@ -27,6 +27,8 @@ private struct MenuLabel: View {
     var body: some View {
         Image(systemName: monitor.menuSymbol)
         Text(monitor.menuTitle)
+            .monospacedDigit()
+            .id(monitor.latest?.timestamp)
     }
 }
 

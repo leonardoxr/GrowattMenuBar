@@ -40,9 +40,10 @@ private struct HeaderView: View {
 
             if let latest = monitor.latest {
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(PowerFormatting.kilowatts(latest.acWatts))
+                    Text(PowerFormatting.kilowatts(latest.acWatts, digits: 2))
                         .font(.system(size: 26, weight: .bold, design: .rounded))
-                    Text("AC output")
+                        .monospacedDigit()
+                    Text("\(PowerFormatting.watts(latest.acWatts)) · AC output")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -81,22 +82,25 @@ private struct GaugeRow: View {
                 title: "PV",
                 value: sample.pvWatts / 1000,
                 unit: "kW",
+                detail: PowerFormatting.watts(sample.pvWatts),
                 fraction: sample.pvWatts / max(capacityWatts, 1),
                 color: .yellow,
-                digits: 1
+                digits: 2
             )
             MetricGauge(
                 title: "AC",
                 value: sample.acWatts / 1000,
                 unit: "kW",
+                detail: PowerFormatting.watts(sample.acWatts),
                 fraction: sample.acWatts / max(capacityWatts, 1),
                 color: .blue,
-                digits: 1
+                digits: 2
             )
             MetricGauge(
                 title: "Temp",
                 value: sample.inverterTempC,
                 unit: "C",
+                detail: "Inverter",
                 fraction: min(sample.inverterTempC / 80, 1),
                 color: .orange,
                 digits: 1
@@ -109,6 +113,7 @@ private struct MetricGauge: View {
     let title: String
     let value: Double
     let unit: String
+    let detail: String
     let fraction: Double
     let color: Color
     let digits: Int
@@ -127,6 +132,7 @@ private struct MetricGauge: View {
                 VStack(spacing: 0) {
                     Text(value, format: .number.precision(.fractionLength(digits)))
                         .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .monospacedDigit()
                     Text(unit)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -135,6 +141,10 @@ private struct MetricGauge: View {
             .frame(width: 94, height: 74)
             Text(title)
                 .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(detail)
+                .font(.caption2)
+                .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -210,8 +220,8 @@ private struct DetailGrid: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                DetailTile(title: "PV1", primary: power(sample.pv1Watts), secondary: "\(one(sample.pv1Volts)) V · \(one(sample.pv1Amps)) A", color: .yellow)
-                DetailTile(title: "PV2", primary: power(sample.pv2Watts), secondary: "\(one(sample.pv2Volts)) V · \(one(sample.pv2Amps)) A", color: .orange)
+                DetailTile(title: "PV1", primary: power(sample.pv1Watts), secondary: "\(PowerFormatting.watts(sample.pv1Watts)) · \(one(sample.pv1Volts)) V · \(one(sample.pv1Amps)) A", color: .yellow)
+                DetailTile(title: "PV2", primary: power(sample.pv2Watts), secondary: "\(PowerFormatting.watts(sample.pv2Watts)) · \(one(sample.pv2Volts)) V · \(one(sample.pv2Amps)) A", color: .orange)
             }
 
             HStack(spacing: 10) {
@@ -227,7 +237,7 @@ private struct DetailGrid: View {
     }
 
     private func power(_ value: Double) -> String {
-        PowerFormatting.kilowatts(value)
+        PowerFormatting.kilowatts(value, digits: 2)
     }
 
     private func one(_ value: Double) -> String {
@@ -304,7 +314,7 @@ private struct SettingsView: View {
                     Text("Capacity")
                         .foregroundStyle(.secondary)
                     Stepper(value: $monitor.capacityWatts, in: 1000...30000, step: 500) {
-                        Text(PowerFormatting.kilowatts(monitor.capacityWatts))
+                        Text(PowerFormatting.kilowatts(monitor.capacityWatts, digits: 1))
                     }
                 }
             }
