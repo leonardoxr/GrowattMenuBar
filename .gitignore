@@ -1,0 +1,17 @@
+.DS_Store
+.build/
+dist/
+DerivedData/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.swp
+*.tmp
+*.log
+
+# Local-only notes/config that should not be published.
+.env
+.env.*
+local.*
+secrets.*

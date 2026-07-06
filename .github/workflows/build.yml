@@ -1,0 +1,17 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift build
+        run: swift build
+      - name: Release app bundle
+        run: ./Scripts/build-app.sh
