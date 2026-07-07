@@ -14,10 +14,16 @@ final class PowerMonitor: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var lastError: String?
     @Published private(set) var lastUpdated: Date?
+    @Published private(set) var nightFallbackActive = false
 
     private var task: Task<Void, Never>?
+    private let nightQuietStartHour = 18
+    private let nightQuietEndHour = 6
 
     var menuSymbol: String {
+        if nightFallbackActive {
+            return "moon.stars.fill"
+        }
         if lastError != nil {
             return "exclamationmark.triangle.fill"
         }
@@ -25,6 +31,9 @@ final class PowerMonitor: ObservableObject {
     }
 
     var menuTitle: String {
+        if nightFallbackActive {
+            return "Sun down"
+        }
         if let latest {
             return "AC \(PowerFormatting.kilowatts(latest.acWatts, digits: 2))"
         }
@@ -87,15 +96,39 @@ final class PowerMonitor: ObservableObject {
             latest = sample
             lastUpdated = sample.timestamp
             lastError = nil
+            nightFallbackActive = false
             history.append(sample)
             if history.count > 180 {
                 history.removeFirst(history.count - 180)
             }
         } catch {
-            lastError = error.localizedDescription
+            if isNightQuietHours() {
+                latest = nil
+                lastUpdated = Date()
+                lastError = nil
+                nightFallbackActive = true
+            } else {
+                lastError = error.localizedDescription
+                nightFallbackActive = false
+            }
         }
     }
 
+    var nightQuietWindowText: String {
+        "\(formatHour(nightQuietStartHour))-\(formatHour(nightQuietEndHour))"
+    }
+
+    private func isNightQuietHours(date: Date = Date()) -> Bool {
+        let hour = Calendar.current.component(.hour, from: date)
+        if nightQuietStartHour > nightQuietEndHour {
+            return hour >= nightQuietStartHour || hour < nightQuietEndHour
+        }
+        return hour >= nightQuietStartHour && hour < nightQuietEndHour
+    }
+
+    private func formatHour(_ hour: Int) -> String {
+        "\(String(format: "%02d", hour)):00"
+    }
 }
 
 extension PowerSample {

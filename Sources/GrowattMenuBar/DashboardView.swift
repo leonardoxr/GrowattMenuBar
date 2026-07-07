@@ -8,7 +8,9 @@ struct DashboardView: View {
         VStack(spacing: 14) {
             HeaderView(monitor: monitor)
 
-            if let latest = monitor.latest {
+            if monitor.nightFallbackActive {
+                NightStateView(windowText: monitor.nightQuietWindowText)
+            } else if let latest = monitor.latest {
                 GaugeRow(sample: latest, capacityWatts: monitor.capacityWatts)
                 HistoryView(samples: monitor.history, capacityWatts: monitor.capacityWatts)
                 DetailGrid(sample: latest)
@@ -52,6 +54,9 @@ private struct HeaderView: View {
     }
 
     private var statusText: String {
+        if monitor.nightFallbackActive {
+            return "Sun down · quiet \(monitor.nightQuietWindowText)"
+        }
         if let error = monitor.lastError {
             return error
         }
@@ -62,6 +67,9 @@ private struct HeaderView: View {
     }
 
     private var statusColor: Color {
+        if monitor.nightFallbackActive {
+            return .secondary
+        }
         if monitor.lastError != nil {
             return .orange
         }
@@ -69,6 +77,27 @@ private struct HeaderView: View {
             return .green
         }
         return .secondary
+    }
+}
+
+private struct NightStateView: View {
+    let windowText: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "moon.stars")
+                .font(.system(size: 32, weight: .medium))
+                .foregroundStyle(.blue)
+            Text("Sun down")
+                .font(.system(size: 14, weight: .semibold))
+            Text("Quiet hours \(windowText)")
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 

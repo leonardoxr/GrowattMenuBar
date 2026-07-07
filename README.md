@@ -17,6 +17,7 @@ The app is local-first and read-only:
 - Expanded popover with AC, PV, PV1, PV2, daily generation, lifetime generation, grid voltage/frequency, and temperature
 - AC power history chart
 - Configurable host, port, Modbus unit id, polling interval, and inverter capacity
+- Night quiet fallback from `18:00-06:00` so inverter sleep/timeouts do not show as alerts after sunset
 
 ## Screenshots
 
@@ -198,6 +199,8 @@ This app intentionally uses small register blocks and defaults to a 10 second po
 - Exit hotspot/config mode
 - Restart the datalogger
 - Avoid running multiple Modbus clients against the dongle at the same time
+
+Between `18:00-06:00`, failed reads are treated as normal nighttime inverter sleep. The menu shows `Sun down` instead of a warning. If a read succeeds during that window, the app still shows the real inverter values.
 
 ### WiFi SSID Or Password Problems
 
