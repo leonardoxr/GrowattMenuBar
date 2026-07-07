@@ -111,6 +111,30 @@ open dist/GrowattMenuBar.app
 
 The app is a menu bar accessory. It will not show a Dock icon.
 
+## Install On macOS
+
+Install it into your user Applications folder:
+
+```bash
+./Scripts/install-app.sh
+```
+
+That script builds the release app, copies it to:
+
+```text
+~/Applications/GrowattMenuBar.app
+```
+
+It also registers the app with macOS and opens it. After that, you can launch it from Spotlight, Launchpad, Finder's Applications list, Raycast, Alfred, or similar launchers.
+
+Because this is a menu bar accessory, opening it will show the sun icon / `AC x.xx kW` in the menu bar instead of a Dock window.
+
+To install somewhere else:
+
+```bash
+GROWATT_INSTALL_DIR=/Applications ./Scripts/install-app.sh
+```
+
 ## Common Problems
 
 ### Growatt Cloud Works, But Local App Cannot Connect
