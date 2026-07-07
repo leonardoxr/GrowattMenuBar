@@ -9,7 +9,7 @@ struct DashboardView: View {
             HeaderView(monitor: monitor)
 
             if monitor.nightFallbackActive {
-                NightStateView(windowText: monitor.nightQuietWindowText)
+                NightStateView(detail: monitor.fallbackDetail, windowText: monitor.fallbackWindowText)
             } else if let latest = monitor.latest {
                 GaugeRow(sample: latest, capacityWatts: monitor.capacityWatts)
                 HistoryView(samples: monitor.history, capacityWatts: monitor.capacityWatts)
@@ -55,7 +55,7 @@ private struct HeaderView: View {
 
     private var statusText: String {
         if monitor.nightFallbackActive {
-            return "Sun down · quiet \(monitor.nightQuietWindowText)"
+            return monitor.fallbackStatusText
         }
         if let error = monitor.lastError {
             return error
@@ -81,6 +81,7 @@ private struct HeaderView: View {
 }
 
 private struct NightStateView: View {
+    let detail: String
     let windowText: String
 
     var body: some View {
@@ -90,7 +91,10 @@ private struct NightStateView: View {
                 .foregroundStyle(.blue)
             Text("Sun down")
                 .font(.system(size: 14, weight: .semibold))
-            Text("Quiet hours \(windowText)")
+            Text(statusText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(windowText)
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -98,6 +102,10 @@ private struct NightStateView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 28)
         .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var statusText: String {
+        detail.isEmpty ? "Waiting for sunrise" : detail.capitalized
     }
 }
 

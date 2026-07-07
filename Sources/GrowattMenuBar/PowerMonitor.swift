@@ -15,10 +15,17 @@ final class PowerMonitor: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var lastUpdated: Date?
     @Published private(set) var nightFallbackActive = false
+    @Published private(set) var fallbackDetail = ""
 
     private var task: Task<Void, Never>?
+
+    // Camaçari-friendly solar schedule: normal day, dusk fallback, quiet night, sparse wake checks.
+    private let duskWatchStartHour = 16
     private let nightQuietStartHour = 18
-    private let nightQuietEndHour = 6
+    private let morningWakeStartHour = 3
+    private let morningWakeEndHour = 6
+    private let wakeProbeIntervalSeconds: Double = 300
+    private let nightQuietIntervalSeconds: Double = 1_800
 
     var menuSymbol: String {
         if nightFallbackActive {
@@ -59,7 +66,7 @@ final class PowerMonitor: ObservableObject {
 
     func refreshNow() {
         Task { [weak self] in
-            await self?.readOnce()
+            await self?.readOnce(phase: self?.pollPhase() ?? .normal)
         }
     }
 
@@ -70,13 +77,19 @@ final class PowerMonitor: ObservableObject {
 
     private func runLoop() async {
         while !Task.isCancelled {
-            await readOnce()
-            let sleepSeconds = max(5, interval)
+            let phase = pollPhase()
+            if phase == .nightQuiet {
+                enterFallback(for: phase)
+            } else {
+                await readOnce(phase: phase)
+            }
+
+            let sleepSeconds = nextSleepSeconds(for: pollPhase())
             try? await Task.sleep(for: .seconds(sleepSeconds))
         }
     }
 
-    private func readOnce() async {
+    private func readOnce(phase: PollPhase) async {
         let currentHost = host.trimmingCharacters(in: .whitespacesAndNewlines)
         let currentPort = port
         let currentUnit = UInt8(clamping: unit)
@@ -96,38 +109,101 @@ final class PowerMonitor: ObservableObject {
             latest = sample
             lastUpdated = sample.timestamp
             lastError = nil
+            fallbackDetail = ""
             nightFallbackActive = false
             history.append(sample)
             if history.count > 180 {
                 history.removeFirst(history.count - 180)
             }
         } catch {
-            if isNightQuietHours() {
-                latest = nil
-                lastUpdated = Date()
-                lastError = nil
-                nightFallbackActive = true
+            if phase.suppressesReadErrors {
+                enterFallback(for: phase)
             } else {
                 lastError = error.localizedDescription
+                fallbackDetail = ""
                 nightFallbackActive = false
             }
         }
     }
 
-    var nightQuietWindowText: String {
-        "\(formatHour(nightQuietStartHour))-\(formatHour(nightQuietEndHour))"
+    var fallbackStatusText: String {
+        fallbackDetail.isEmpty ? "Sun down" : "Sun down · \(fallbackDetail)"
     }
 
-    private func isNightQuietHours(date: Date = Date()) -> Bool {
-        let hour = Calendar.current.component(.hour, from: date)
-        if nightQuietStartHour > nightQuietEndHour {
-            return hour >= nightQuietStartHour || hour < nightQuietEndHour
+    var fallbackWindowText: String {
+        "quiet \(formatHour(nightQuietStartHour))-\(formatHour(morningWakeStartHour)), wake checks \(formatHour(morningWakeStartHour))-\(formatHour(morningWakeEndHour))"
+    }
+
+    private func enterFallback(for phase: PollPhase) {
+        latest = nil
+        lastUpdated = Date()
+        lastError = nil
+        fallbackDetail = phase.fallbackDetail
+        nightFallbackActive = true
+    }
+
+    private func nextSleepSeconds(for phase: PollPhase) -> Double {
+        switch phase {
+        case .normal:
+            return normalPollIntervalSeconds
+        case .duskWatch:
+            return nightFallbackActive ? wakeProbeIntervalSeconds : normalPollIntervalSeconds
+        case .nightQuiet:
+            return nightQuietIntervalSeconds
+        case .morningWake:
+            return nightFallbackActive || latest == nil ? wakeProbeIntervalSeconds : normalPollIntervalSeconds
         }
-        return hour >= nightQuietStartHour && hour < nightQuietEndHour
+    }
+
+    private var normalPollIntervalSeconds: Double {
+        max(5, interval)
+    }
+
+    private func pollPhase(date: Date = Date()) -> PollPhase {
+        let hour = Calendar.current.component(.hour, from: date)
+        if hour >= nightQuietStartHour || hour < morningWakeStartHour {
+            return .nightQuiet
+        }
+        if hour < morningWakeEndHour {
+            return .morningWake
+        }
+        if hour >= duskWatchStartHour {
+            return .duskWatch
+        }
+        return .normal
     }
 
     private func formatHour(_ hour: Int) -> String {
         "\(String(format: "%02d", hour)):00"
+    }
+}
+
+private enum PollPhase {
+    case normal
+    case duskWatch
+    case nightQuiet
+    case morningWake
+
+    var suppressesReadErrors: Bool {
+        switch self {
+        case .normal:
+            return false
+        case .duskWatch, .nightQuiet, .morningWake:
+            return true
+        }
+    }
+
+    var fallbackDetail: String {
+        switch self {
+        case .normal:
+            return ""
+        case .duskWatch:
+            return "dusk watch"
+        case .nightQuiet:
+            return "quiet"
+        case .morningWake:
+            return "wake check"
+        }
     }
 }
 

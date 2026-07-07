@@ -17,7 +17,7 @@ The app is local-first and read-only:
 - Expanded popover with AC, PV, PV1, PV2, daily generation, lifetime generation, grid voltage/frequency, and temperature
 - AC power history chart
 - Configurable host, port, Modbus unit id, polling interval, and inverter capacity
-- Night quiet fallback from `18:00-06:00` so inverter sleep/timeouts do not show as alerts after sunset
+- Night-aware polling so inverter sleep/timeouts do not show as alerts after sunset
 
 ## Screenshots
 
@@ -200,7 +200,14 @@ This app intentionally uses small register blocks and defaults to a 10 second po
 - Restart the datalogger
 - Avoid running multiple Modbus clients against the dongle at the same time
 
-Between `18:00-06:00`, failed reads are treated as normal nighttime inverter sleep. The menu shows `Sun down` instead of a warning. If a read succeeds during that window, the app still shows the real inverter values.
+The app uses a Camaçari-friendly night schedule:
+
+- `06:00-16:00`: normal polling.
+- `16:00-18:00`: dusk watch. Poll normally while the inverter responds; after the first timeout, show `Sun down` and probe every 5 minutes.
+- `18:00-03:00`: quiet night. Show `Sun down` and skip automatic Modbus reads.
+- `03:00-06:00`: wake checks. Probe every 5 minutes until the inverter responds, then resume normal polling.
+
+The `Refresh` button still attempts an immediate read.
 
 ### WiFi SSID Or Password Problems
 
